@@ -27,7 +27,7 @@ fi
 echo "Path to Java : $RUN_JAVA"
 
 # Need to download the Azure Discovery API using Maven
-mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$2 -DoutputDirectory=$HAZELCAST_HOME/lib
+mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$1 -DoutputDirectory=$HAZELCAST_HOME/lib
 
 #### minimum heap size
 if [ "x$MIN_HEAP_SIZE" = "x" ]
