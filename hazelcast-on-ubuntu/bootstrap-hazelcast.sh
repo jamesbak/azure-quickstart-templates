@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Usage: bootstrap-hazelcast.sh {hz-userName} {hz-password} {hz-version} {spi-version} 
-# Sample: bootstrap-hazelcast.sh 'test-hz-jb' 'hazelcastpassword' '3.4.1' '1.0-RC1'
+# Usage: bootstrap-hazelcast.sh {hz-userName} {hz-password} {hz-version} {spi-version} {subscription-id} {tenant-id} {aad-client-id} {aad-client-secret} {cluster-tag} 
+# Sample: bootstrap-hazelcast.sh 'test-hz-jb' 'hazelcastpassword' '3.4.1' '1.0-RC1' '24cb2056-d747-4f35-a373-42861a1b37b9' '94a088bf-86f1-41af-91ab-2d7cd011db47' '5ec177d1-9066-476f-8681-9d0e7f8a97fe' 'QgfZiP2HOoqatrKczC4IQrvusPER8gjqApLV9RAGsYM=' 'my-hazelcast-cluster'
 
 execname=$0
 scriptstatus=$0
@@ -87,10 +87,11 @@ if [ $scriptstatus -ne 0 ]
  then
   log "Failed to run command cp -f logging.properties /var/lib/hazelcast-$3/bin/"
 fi
-#python3.4 hazelcast_modify_configuration.py --cn "$1" --cp "$2" --ip "$4" --pg "$5" --fn "/var/lib/hazelcast-$3/bin/hazelcast.xml"
-#scriptstatus=$?
-#if [ $scriptstatus -ne 0 ]
-# then
-#  log "Failed to modify Hazelcast XML configuration file"
-#fi
+python hazelcast_modify_configuration.py --cn "$1" --cp "$2" --si test-sub --ti test-tenant --aci test-client-id --acs test-client-secret --ct test-cluster-tag --fn "/var/lib/hazelcast-$3/bin/hazelcast.xml"
+python3.4 hazelcast_modify_configuration.py --cn "$1" --cp "$2" --ip "$4" --pg "$5" --fn "/var/lib/hazelcast-$3/bin/hazelcast.xml"
+scriptstatus=$?
+if [ $scriptstatus -ne 0 ]
+ then
+  log "Failed to modify Hazelcast XML configuration file"
+fi
 nohup sh initialize-hazelcast.sh $3 $4 >/dev/null 2>&1 &

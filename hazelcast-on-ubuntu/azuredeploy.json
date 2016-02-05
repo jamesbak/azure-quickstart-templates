@@ -34,6 +34,24 @@
             "metadata": {
                 "description": "Admin password."
             }
+        },
+        "aadTenantId": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure Active Directory tenant id which includes the authentication access Application"
+            }
+        },
+        "aadClientId": {
+            "type": "string",
+            "metadata": {
+                "description": "Client ID for Azure Active Directory Application."
+            }
+        },
+        "aadClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Client secret (key) for Azure Active Directory Application"
+            }
         }
     },
     "variables": {
@@ -181,6 +199,9 @@
                 "tier": "Standard",
                 "capacity": "[parameters('instanceCount')]"
             },
+            "tags": {
+                "[parameters('clusterName')]": "5701"
+            },
             "properties": {
                 "upgradePolicy": {
                     "mode": "Manual"
@@ -244,7 +265,7 @@
                                         "fileUris": "[variables('scripts')]"
                                     },
                                     "protectedSettings": {
-                                        "commandToExecute": "[concat('sh bootstrap-hazelcast.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' 3.6 1.0-RC1')]"
+                                        "commandToExecute": "[concat('sh bootstrap-hazelcast.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' 3.6 1.0-RC1 ', subscription().subscriptionId, ' ', parameters('aadTenantId'), ' ', parameters('aadClientId'), ' ', parameters('aadClientSecret'), ' ', parameters('clusterName'))]"
                                     }
                                 }
                             }
