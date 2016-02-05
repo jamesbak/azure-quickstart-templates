@@ -55,6 +55,15 @@ if [ $scriptstatus -ne 0 ]
 	log "apt-get --yes install openjdk-7-jre failed after three attempts, exiting script"
 	exit $scriptstatus
 fi
+log "Installing Maven..."
+getcommand="apt-get --yes install maven"
+echo "trying $getcommand"
+reliableaptget
+if [ $scriptstatus -ne 0 ]
+ then
+	log "apt-get --yes install maven failed after three attempts, exiting script"
+	exit $scriptstatus
+fi
 log "BEGIN: Running apt-get update again"
 apt-get -y update >> $LOG_DIR_FILE
 scriptstatus=$?
@@ -63,7 +72,8 @@ if [ $scriptstatus -ne 0 ]
   log "apt-get -y update failed, exiting script"
   exit $scriptstatus
 fi
+
 log "Changing directory to bin to run the server.sh"
 cd /var/lib/hazelcast-$1/bin/
-log "Executing server.sh logging into /tmp/initialize-hazelcast-server-sh.log"
-sh server.sh $1 > $LOG_DIR_SERVER
+log "Executing server.sh logging into /var/log/initialize-hazelcast/initialize-hazelcast-server-sh.log"
+sh server.sh $1 $2 > $LOG_DIR_SERVER

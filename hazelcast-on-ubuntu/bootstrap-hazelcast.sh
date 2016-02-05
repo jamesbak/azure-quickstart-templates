@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Usage: bootstrap-hazelcast.sh {hz-userName} {hz-password} {hz-version} 
-# Sample: bootstrap-hazelcast.sh 'test-hz-jb' 'hazelcastpassword' '3.4.1'
+# Usage: bootstrap-hazelcast.sh {hz-userName} {hz-password} {hz-version} {spi-version} 
+# Sample: bootstrap-hazelcast.sh 'test-hz-jb' 'hazelcastpassword' '3.4.1' '1.0-RC1'
 
 execname=$0
 scriptstatus=$0
@@ -29,7 +29,7 @@ reliableaptget() {
    then
      scriptstatus=1203
   fi
-  }
+}
 
 log "BEGIN: apt-get update"
 apt-get -y update
@@ -93,4 +93,4 @@ fi
 # then
 #  log "Failed to modify Hazelcast XML configuration file"
 #fi
-nohup sh initialize-hazelcast.sh $3 >/dev/null 2>&1 &
+nohup sh initialize-hazelcast.sh $3 $4 >/dev/null 2>&1 &
