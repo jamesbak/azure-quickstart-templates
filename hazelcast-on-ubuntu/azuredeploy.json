@@ -1,0 +1,226 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
+            },
+            "maxLength": 9
+        },
+        "vmSku": {
+            "type": "string",
+            "defaultValue": "Standard_A1",
+            "metadata": {
+                "description": "Size of VMs in the VM Scale Set."
+            }
+        },
+        "instanceCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of VM instances initially deployed to the cluster - can be scaled up or down later (100 or less)."
+            },
+            "maxValue": 100
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin username for both shell and cluster management."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Admin password."
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": "2015-06-15",
+        "storageAccountType": "Standard_LRS",
+        "saCount": 10,
+        "newStorageAccountSuffix": "[concat(parameters('clusterName'), 'sa')]",
+        "uniqueStringArray": [
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '5')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '6')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '7')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '8')))]",
+            "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '9')))]"
+        ],
+        "vhdContainerName": "[concat(parameters('clusterName'), 'vhd')]",
+        "osDiskName": "[concat(parameters('clusterName'), 'osdisk')]",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetPrefix": "10.0.0.0/24",
+        "virtualNetworkName": "[concat(parameters('clusterName'), 'vnet')]",
+        "publicIPAddressName": "[concat(parameters('clusterName'), 'pip')]",
+        "subnetName": "[concat(parameters('clusterName'), 'subnet')]",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "nicName": "[concat(parameters('clusterName'), 'nic')]",
+        "ipConfigName": "[concat(parameters('clusterName'), 'ipconfig')]",
+        "osType": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "15.10",
+            "version": "latest"
+        },
+        "imageReference": "[variables('osType')]",
+        "templateBaseUrl": "https://raw.githubusercontent.com/jamesbak/azure-quickstart-templates/hazelcast/hazelcast-on-ubuntu/",
+        "scripts": [ 
+            "[concat(variables('templateBaseUrl'), 'bootstrap-hazelcast.sh')]", 
+            "[concat(variables('templateBaseUrl'), 'server.sh')]", 
+            "[concat(variables('templateBaseUrl'), 'hazelcast.xml')]", 
+            "[concat(variables('templateBaseUrl'), 'initialize-hazelcast.sh')]", 
+            "[concat(variables('templateBaseUrl'), 'logging.properties')]", 
+            "[concat(variables('templateBaseUrl'), 'hazelcast_modify_configuration.py')]", 
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh" 
+        ] 
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "[variables('apiVersion')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "[variables('apiVersion')]",
+            "copy": {
+                "name": "storageLoop",
+                "count": "[variables('saCount')]"
+            },
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "[variables('apiVersion')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('clusterName')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "name": "[parameters('clusterName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[5], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[6], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[7], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[8], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[9], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "sku": {
+                "name": "[parameters('vmSku')]",
+                "tier": "Standard",
+                "capacity": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "vhdContainers": [
+                                "[concat('https://', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[5], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[6], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[7], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[8], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                                "[concat('https://', variables('uniqueStringArray')[9], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]"
+                            ],
+                            "name": "[variables('osDiskName')]",
+                            "caching": "ReadOnly",
+                            "createOption": "FromImage"
+                        },
+                        "imageReference": "[variables('imageReference')]"
+                    },
+                    "osProfile": {
+                        "computerNamePrefix": "[parameters('clusterName')]",
+                        "adminUsername": "[parameters('adminUsername')]",
+                        "adminPassword": "[parameters('adminPassword')]"
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "[variables('nicName')]",
+                                "properties": {
+                                    "primary": "true",
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "[variables('ipConfigName')]",
+                                            "properties": {
+                                                "subnet": {
+                                                    "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "extensionProfile": {
+                        "extensions": [
+                            {
+                                "name": "BootstrapHazelcast",
+                                "properties": {
+                                    "publisher": "Microsoft.OSTCExtensions",
+                                    "type": "CustomScriptForLinux",
+                                    "typeHandlerVersion": "1.4",
+                                    "settings": {
+                                        "fileUris": "[variables('scripts')]"
+                                    },
+                                    "protectedSettings": {
+                                        "commandToExecute": "[concat('sh bootstrap-hazelcast.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' 3.6')]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
