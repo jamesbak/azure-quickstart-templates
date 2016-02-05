@@ -60,9 +60,17 @@
         "virtualNetworkName": "[concat(parameters('clusterName'), 'vnet')]",
         "publicIPAddressName": "[concat(parameters('clusterName'), 'pip')]",
         "subnetName": "[concat(parameters('clusterName'), 'subnet')]",
-        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "loadBalancerName": "[concat(parameters('clusterName'), 'lb')]",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
+        "natPoolName": "[concat(parameters('clusterName'), 'natpool')]",
+        "bePoolName": "[concat(parameters('clusterName'), 'bepool')]",
+        "natStartPort": 50000,
+        "natEndPort": 50099,
+        "natBackendPort": 22,
         "nicName": "[concat(parameters('clusterName'), 'nic')]",
         "ipConfigName": "[concat(parameters('clusterName'), 'ipconfig')]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
         "osType": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
@@ -71,14 +79,14 @@
         },
         "imageReference": "[variables('osType')]",
         "templateBaseUrl": "https://raw.githubusercontent.com/jamesbak/azure-quickstart-templates/hazelcast/hazelcast-on-ubuntu/",
-        "scripts": [ 
-            "[concat(variables('templateBaseUrl'), 'bootstrap-hazelcast.sh')]", 
-            "[concat(variables('templateBaseUrl'), 'server.sh')]", 
-            "[concat(variables('templateBaseUrl'), 'hazelcast.xml')]", 
-            "[concat(variables('templateBaseUrl'), 'initialize-hazelcast.sh')]", 
-            "[concat(variables('templateBaseUrl'), 'logging.properties')]", 
-            "[concat(variables('templateBaseUrl'), 'hazelcast_modify_configuration.py')]" 
-        ] 
+        "scripts": [
+            "[concat(variables('templateBaseUrl'), 'bootstrap-hazelcast.sh')]",
+            "[concat(variables('templateBaseUrl'), 'server.sh')]",
+            "[concat(variables('templateBaseUrl'), 'hazelcast.xml')]",
+            "[concat(variables('templateBaseUrl'), 'initialize-hazelcast.sh')]",
+            "[concat(variables('templateBaseUrl'), 'logging.properties')]",
+            "[concat(variables('templateBaseUrl'), 'hazelcast_modify_configuration.py')]"
+        ]
     },
     "resources": [
         {
@@ -128,6 +136,46 @@
             }
         },
         {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[variables('loadBalancerName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressID')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('bePoolName')]"
+                    }
+                ],
+                "inboundNatPools": [
+                    {
+                        "name": "[variables('natPoolName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "protocol": "tcp",
+                            "frontendPortRangeStart": "[variables('natStartPort')]",
+                            "frontendPortRangeEnd": "[variables('natEndPort')]",
+                            "backendPort": "[variables('natBackendPort')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('clusterName')]",
             "location": "[resourceGroup().location]",
@@ -143,6 +191,7 @@
                 "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[7], variables('newStorageAccountSuffix'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[8], variables('newStorageAccountSuffix'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[9], variables('newStorageAccountSuffix'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "sku": {
@@ -192,7 +241,17 @@
                                             "properties": {
                                                 "subnet": {
                                                     "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
-                                                }
+                                                },
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+                                                    }
+                                                ],
+                                                "loadBalancerInboundNatPools": [
+                                                    {
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('natPoolName'))]"
+                                                    }
+                                                ]
                                             }
                                         }
                                     ]

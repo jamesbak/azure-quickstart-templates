@@ -59,7 +59,7 @@ if [ $scriptstatus -ne 0 ]
 fi
 log "END: apt-get update ran successfully"
 log "Unzip Hazelcast in var/lib dir..."
-wget -O hazelcast-$3.tar.gz http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p=
+wget -O hazelcast-$3.tar.gz "http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p="
 tar -xzf hazelcast-$3.tar.gz -C /var/lib/
 scriptstatus=$?
 if [ $scriptstatus -ne 0 ]
