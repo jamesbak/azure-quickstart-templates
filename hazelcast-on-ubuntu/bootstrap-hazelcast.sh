@@ -87,8 +87,7 @@ if [ $scriptstatus -ne 0 ]
  then
   log "Failed to run command cp -f logging.properties /var/lib/hazelcast-$3/bin/"
 fi
-python hazelcast_modify_configuration.py --cn "$1" --cp "$2" --si test-sub --ti test-tenant --aci test-client-id --acs test-client-secret --ct test-cluster-tag --fn "/var/lib/hazelcast-$3/bin/hazelcast.xml"
-python3.4 hazelcast_modify_configuration.py --cn "$1" --cp "$2" --ip "$4" --pg "$5" --fn "/var/lib/hazelcast-$3/bin/hazelcast.xml"
+python hazelcast_modify_configuration.py --cn "$1" --cp "$2" --si "$5" --ti "$6" --aci "$7" --acs "$8" --ct "$9" --fn "/var/lib/hazelcast-$3/bin/hazelcast.xml"
 scriptstatus=$?
 if [ $scriptstatus -ne 0 ]
  then
