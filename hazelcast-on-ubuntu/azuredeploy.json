@@ -77,8 +77,7 @@
             "[concat(variables('templateBaseUrl'), 'hazelcast.xml')]", 
             "[concat(variables('templateBaseUrl'), 'initialize-hazelcast.sh')]", 
             "[concat(variables('templateBaseUrl'), 'logging.properties')]", 
-            "[concat(variables('templateBaseUrl'), 'hazelcast_modify_configuration.py')]", 
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh" 
+            "[concat(variables('templateBaseUrl'), 'hazelcast_modify_configuration.py')]" 
         ] 
     },
     "resources": [
