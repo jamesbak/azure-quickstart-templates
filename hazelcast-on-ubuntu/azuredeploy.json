@@ -244,7 +244,7 @@
                                         "fileUris": "[variables('scripts')]"
                                     },
                                     "protectedSettings": {
-                                        "commandToExecute": "[concat('sh bootstrap-hazelcast.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' 3.6')]"
+                                        "commandToExecute": "[concat('sh bootstrap-hazelcast.sh ', parameters('adminUsername'), ' ', parameters('adminPassword'), ' 3.6 1.0-RC1')]"
                                     }
                                 }
                             }
