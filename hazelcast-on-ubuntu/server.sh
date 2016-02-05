@@ -4,6 +4,12 @@ PRG="$0"
 PRGDIR=`dirname "$PRG"`
 HAZELCAST_HOME=../$PRGDIR
 HAZELCAST_LOG_DIR=/var/log/hazelcast
+HAZELCAST_VERSION=$1
+
+if [ "x$HAZELCAST_VERSION" = "x" ]
+ then
+    HAZELCAST_VERSION=3.6
+fi
 
 #creating log directory
 mkdir $HAZELCAST_LOG_DIR
@@ -46,7 +52,7 @@ if [ "x$MAX_HEAP_SIZE" != "x" ]; then
 	JAVA_OPTS="$JAVA_OPTS -Xms${MAX_HEAP_SIZE}"
 fi
 
-export CLASSPATH=$HAZELCAST_HOME/lib/hazelcast-$1.jar
+export CLASSPATH=$HAZELCAST_HOME/lib/hazelcast-$HAZELCAST_VERSION.jar
 
 echo "########################################"
 echo "# RUN_JAVA=$RUN_JAVA"

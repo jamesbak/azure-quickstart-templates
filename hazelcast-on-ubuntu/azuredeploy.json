@@ -72,7 +72,7 @@
         "templateBaseUrl": "https://raw.githubusercontent.com/jamesbak/azure-quickstart-templates/hazelcast/hazelcast-on-ubuntu/",
         "scripts": [
             "[concat(variables('templateBaseUrl'), 'bootstrap-hazelcast.sh')]",
-            "[concat(variables('templateBaseUrl'), 'server.sh')]",
+            "[concat(variables('templateBaseUrl'), 'start.sh')]",
             "[concat(variables('templateBaseUrl'), 'hazelcast.xml')]",
             "[concat(variables('templateBaseUrl'), 'initialize-hazelcast.sh')]",
             "[concat(variables('templateBaseUrl'), 'logging.properties')]",

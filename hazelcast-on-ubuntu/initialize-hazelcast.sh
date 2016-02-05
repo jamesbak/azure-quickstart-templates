@@ -47,12 +47,12 @@ if [ $scriptstatus -ne 0 ]
 fi
 log "END: apt-get upgrade succeeded"
 log "Installing JRE..."
-getcommand="apt-get --yes install openjdk-7-jre"
+getcommand="apt-get --yes install openjdk-8-jre"
 echo "trying $getcommand"
 reliableaptget
 if [ $scriptstatus -ne 0 ]
  then
-	log "apt-get --yes install openjdk-7-jre failed after three attempts, exiting script"
+	log "apt-get --yes install openjdk-8-jre failed after three attempts, exiting script"
 	exit $scriptstatus
 fi
 log "Installing Maven..."
@@ -73,7 +73,10 @@ if [ $scriptstatus -ne 0 ]
   exit $scriptstatus
 fi
 
-log "Changing directory to bin to run the server.sh"
+# Need to download the Azure Discovery API using Maven
+mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$2 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+
+log "Changing directory to bin to run the start.sh"
 cd /var/lib/hazelcast-$1/bin/
-log "Executing server.sh logging into /var/log/initialize-hazelcast/initialize-hazelcast-server-sh.log"
-sh server.sh $1 $2 > $LOG_DIR_SERVER
+log "Executing start.sh logging into $LOG_DIR_SERVER"
+sh start.sh $1 $2 > $LOG_DIR_SERVER

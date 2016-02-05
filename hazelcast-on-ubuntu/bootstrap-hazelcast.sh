@@ -75,11 +75,11 @@ if [ $scriptstatus -ne 0 ]
   log "Failed to run command cp -f hazelcast.xml /var/lib/hazelcast-$3/bin/"
 fi
 
-cp -f server.sh /var/lib/hazelcast-$3/bin/
+cp -f start.sh /var/lib/hazelcast-$3/bin/
 scriptstatus=$?
 if [ $scriptstatus -ne 0 ]
  then
-  log "Failed to run command cp -f server.sh /var/lib/hazelcast-$3/bin/"
+  log "Failed to run command cp -f start.sh /var/lib/hazelcast-$3/bin/"
 fi
 cp -f logging.properties /var/lib/hazelcast-$3/bin/
 scriptstatus=$?
