@@ -73,8 +73,17 @@ if [ $scriptstatus -ne 0 ]
   exit $scriptstatus
 fi
 
-# Need to download the Azure Discovery API using Maven
+# Need to download the Azure Discovery API using Maven & manually load the dependencies
 mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$2 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-compute:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-resources:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-network:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-utility:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-core:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=org.apache.httpcomponents:httpclient:4.5.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.microsoft.azure:adal4j:1.1.2 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.nimbusds:oauth2-oidc-sdk:4.5 -DoutputDirectory=/var/lib/hazelcast-$1/lib
+mvn dependency:copy -Dartifact=com.google.code.gson:gson:2.2.4 -DoutputDirectory=/var/lib/hazelcast-$1/lib
 
 log "Changing directory to bin to run the start.sh"
 cd /var/lib/hazelcast-$1/bin/

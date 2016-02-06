@@ -62,7 +62,7 @@ echo "########################################"
 PID=$(cat "${PID_FILE}");
 if [ -z "${PID}" ]; then
     echo "Process id for hazelcast instance is written to location: {$PID_FILE}"
-    $RUN_JAVA -server -Djava.util.logging.config.file=$HAZELCAST_HOME/bin/logging.properties $JAVA_OPTS com.hazelcast.core.server.StartServer &
+    $RUN_JAVA -server -Djava.util.logging.config.file=$HAZELCAST_HOME/bin/logging.properties -Dhazelcast.config=$HAZELCAST_HOME/bin/hazelcast.xml $JAVA_OPTS com.hazelcast.core.server.StartServer &
     echo $! > ${PID_FILE}
 else
     echo "Another hazelcast instance is already started in this folder. To start a new instance, please unzip 3.6.zip/tar.gz in a new folder."
