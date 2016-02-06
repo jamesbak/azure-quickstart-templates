@@ -17,7 +17,7 @@ reliableaptget() {
  COMMAND_STATUS=1
  until [ $COMMAND_STATUS -eq 0 ] || [ $wait_time -eq $TIME_MAX ]; do
    echo "try $getcommand with timeincrement $wait_time"
-   $getcommand >> LOG_DIR_FILE 2>>&1
+   $getcommand >> LOG_DIR_FILE 2>&1
    COMMAND_STATUS=$?
    echo "command status $COMMAND_STATUS"
    wait_time=$(($wait_time + $TIME_INCREMENT))
@@ -50,15 +50,10 @@ if [ $scriptstatus -ne 0 ]
 	log "apt-get --yes install openjdk-8-jre failed after three attempts, exiting script"
 	exit $scriptstatus
 fi
+# We get spurious behavior wrt Java certs - sometimes they come down with the JRE, sometimes they don't. apt-get ALWAYS seems to
+# return 100 which breaks our retry logic...
 log "Fetching Java TLS certificates"
-getcommand="apt-get install -y ca-certificates-java && update-ca-certificates -f"
-echo "trying $getcommand"
-reliableaptget
-if [ $scriptstatus -ne 0 ]
- then
-	log "apt-get install -y ca-certificates-java && update-ca-certificates -f failed after three attempts, exiting script"
-	exit $scriptstatus
-fi
+apt-get install -y ca-certificates-java && update-ca-certificates -f >> $LOG_DIR_FILE 2>&1
 log "Installing Maven..."
 getcommand="apt-get --yes install maven"
 echo "trying $getcommand"
@@ -78,16 +73,16 @@ if [ $scriptstatus -ne 0 ]
 fi
 
 # Need to download the Azure Discovery API using Maven & manually load the dependencies
-mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$2 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-compute:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-resources:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-network:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-utility:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-core:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=org.apache.httpcomponents:httpclient:4.5.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:adal4j:1.1.2 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.nimbusds:oauth2-oidc-sdk:4.5 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
-mvn dependency:copy -Dartifact=com.google.code.gson:gson:2.2.4 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>>&1
+mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$2 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-compute:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-resources:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-network:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-utility:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.microsoft.azure:azure-core:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=org.apache.httpcomponents:httpclient:4.5.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.microsoft.azure:adal4j:1.1.2 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.nimbusds:oauth2-oidc-sdk:4.5 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+mvn dependency:copy -Dartifact=com.google.code.gson:gson:2.2.4 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
 
 log "Changing directory to bin to run the start.sh"
 cd /var/lib/hazelcast-$1/bin/
