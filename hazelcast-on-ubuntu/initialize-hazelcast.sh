@@ -55,6 +55,15 @@ if [ $scriptstatus -ne 0 ]
 	log "apt-get --yes install openjdk-8-jre failed after three attempts, exiting script"
 	exit $scriptstatus
 fi
+log "Fetching Java TLS certificates"
+getcommand="apt-get install -y ca-certificates-java && update-ca-certificates -f"
+echo "trying $getcommand"
+reliableaptget
+if [ $scriptstatus -ne 0 ]
+ then
+	log "apt-get install -y ca-certificates-java && update-ca-certificates -f failed after three attempts, exiting script"
+	exit $scriptstatus
+fi
 log "Installing Maven..."
 getcommand="apt-get --yes install maven"
 echo "trying $getcommand"
