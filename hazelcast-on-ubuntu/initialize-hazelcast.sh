@@ -17,7 +17,7 @@ reliableaptget() {
  COMMAND_STATUS=1
  until [ $COMMAND_STATUS -eq 0 ] || [ $wait_time -eq $TIME_MAX ]; do
    echo "try $getcommand with timeincrement $wait_time"
-   $getcommand >> LOG_DIR_FILE 2>&1
+   $getcommand >> $LOG_DIR_FILE 2>&1
    COMMAND_STATUS=$?
    echo "command status $COMMAND_STATUS"
    wait_time=$(($wait_time + $TIME_INCREMENT))
@@ -76,7 +76,7 @@ if [ $scriptstatus -ne 0 ]
 fi
 
 log "BEGIN: Running apt-get update again"
-apt-get -y update >> $LOG_DIR_FILE
+apt-get -y update >> $LOG_DIR_FILE 2>&1
 scriptstatus=$?
 if [ $scriptstatus -ne 0 ]
  then

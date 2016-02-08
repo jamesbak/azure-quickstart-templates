@@ -31,6 +31,28 @@ reliableaptget() {
   fi
 }
 
+reliablewget() {
+ TIME_MAX=15
+ TIME_INCREMENT=5
+ wait_time=0
+ COMMAND_STATUS=1
+ until [ $COMMAND_STATUS -eq 0 ] || [ $wait_time -eq $TIME_MAX ] || [ -s "$wgettarget" ]; do
+   echo "try $wgetcommand with timeincrement $wait_time"
+   $wgetcommand
+   COMMAND_STATUS=$?
+   echo "command status $COMMAND_STATUS"
+   wait_time=$(($wait_time + $TIME_INCREMENT))
+   if [ $COMMAND_STATUS -gt 0 ] || [ ! -s "$wgettarget" ]
+    then
+     sleep $wait_time
+   fi
+  done
+ if [ $COMMAND_STATUS -ne 0 ]
+   then
+     scriptstatus=1203
+  fi
+}
+
 log "BEGIN: apt-get update"
 apt-get -y update
 scriptstatus=$?
@@ -40,6 +62,7 @@ if [ $scriptstatus -ne 0 ]
   exit $scriptstatus
 fi
 log "END: apt-get update successfully"
+
 log "Installing python 3.4 binaries..."
 getcommand="apt-get --yes install python3.4"
 echo "trying $getcommand"
@@ -49,6 +72,7 @@ if [ $scriptstatus -ne 0 ]
    log "apt-get --yes install python3.4 failed after three attempts, exiting script"
    exit $scriptstatus
 fi
+
 log "BEGIN: Running apt-get update again"
 apt-get -y update
 scriptstatus=$?
@@ -58,13 +82,22 @@ if [ $scriptstatus -ne 0 ]
   exit $scriptstatus
 fi
 log "END: apt-get update ran successfully"
+
 log "Unzip Hazelcast in var/lib dir..."
-wget --unlink -O hazelcast-$3.tar.gz "http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p="
-tar -xzf hazelcast-$3.tar.gz -C /var/lib/
+wgettarget="hazelcast-$3.tar.gz"
+wgetcommand="tar --unlink -O $wgettarget http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p="
+reliablewget
+if [ $scriptstatus -ne 0 ]
+ then
+  log "wget failed after three attempts, exiting script"
+  exit $scriptstatus
+fi
+tar -xzf $wgettarget -C /var/lib/
 scriptstatus=$?
 if [ $scriptstatus -ne 0 ]
  then
   log "Failed to run command tar -xzf hazelcast-$3.tar.gz -C /var/lib/"
+  exit $scriptstatus
 fi
 
 log "Copy customized Hazelcast artifacts in var/lib dir..."
