@@ -85,7 +85,7 @@ log "END: apt-get update ran successfully"
 
 log "Unzip Hazelcast in var/lib dir..."
 wgettarget="hazelcast-$3.tar.gz"
-wgetcommand="tar --unlink -O $wgettarget http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p="
+wgetcommand="wget --unlink -O $wgettarget http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p="
 reliablewget
 if [ $scriptstatus -ne 0 ]
  then
