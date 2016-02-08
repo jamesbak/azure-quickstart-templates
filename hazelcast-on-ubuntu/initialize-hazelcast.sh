@@ -54,6 +54,7 @@ fi
 # return 100 which breaks our retry logic...
 log "Fetching Java TLS certificates"
 apt-get install -y ca-certificates-java && update-ca-certificates -f >> $LOG_DIR_FILE 2>&1
+
 log "Installing Maven..."
 getcommand="apt-get --yes install maven"
 echo "trying $getcommand"
@@ -63,6 +64,17 @@ if [ $scriptstatus -ne 0 ]
 	log "apt-get --yes install maven failed after three attempts, exiting script"
 	exit $scriptstatus
 fi
+
+log "Installing unzip..."
+getcommand="apt-get --yes install unzip"
+echo "trying $getcommand"
+reliableaptget
+if [ $scriptstatus -ne 0 ]
+ then
+	log "apt-get --yes install unzip failed after three attempts, exiting script"
+	exit $scriptstatus
+fi
+
 log "BEGIN: Running apt-get update again"
 apt-get -y update >> $LOG_DIR_FILE
 scriptstatus=$?
@@ -73,16 +85,10 @@ if [ $scriptstatus -ne 0 ]
 fi
 
 # Need to download the Azure Discovery API using Maven & manually load the dependencies
+log "BEGIN: Downloading Azure SPI + dependencies"
 mvn dependency:copy -Dartifact=com.hazelcast.azure:hazelcast-azure:$2 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-compute:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-resources:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-network:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-mgmt-utility:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:azure-core:0.9.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=org.apache.httpcomponents:httpclient:4.5.1 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.microsoft.azure:adal4j:1.1.2 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.nimbusds:oauth2-oidc-sdk:4.5 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
-mvn dependency:copy -Dartifact=com.google.code.gson:gson:2.2.4 -DoutputDirectory=/var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
+wget --unlink -O PackageForAzureLibrariesForJava.zip "http://go.microsoft.com/fwlink/?linkid=690320&clcid=0x409" >> $LOG_DIR_FILE 2>&1
+unzip -uo PackageForAzureLibrariesForJava.zip -d /var/lib/hazelcast-$1/lib >> $LOG_DIR_FILE 2>&1
 
 log "Changing directory to bin to run the start.sh"
 cd /var/lib/hazelcast-$1/bin/
