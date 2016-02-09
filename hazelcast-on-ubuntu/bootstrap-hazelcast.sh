@@ -49,6 +49,7 @@ reliablewgetanduntar() {
       COMMAND_STATUS=$?
       if [ $COMMAND_STATUS -gt 0 ] || [ ! -s "$wgettarget" ]
        then
+        rm $wgettarget
         sleep $wait_time
       fi
     fi
