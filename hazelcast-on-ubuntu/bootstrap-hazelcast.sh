@@ -31,25 +31,35 @@ reliableaptget() {
   fi
 }
 
-reliablewget() {
- TIME_MAX=15
- TIME_INCREMENT=5
- wait_time=0
- COMMAND_STATUS=1
- until [ $COMMAND_STATUS -eq 0 ] || [ $wait_time -eq $TIME_MAX ] || [ -s "$wgettarget" ]; do
-   echo "try $wgetcommand with timeincrement $wait_time"
-   $wgetcommand
-   COMMAND_STATUS=$?
-   echo "command status $COMMAND_STATUS"
-   wait_time=$(($wait_time + $TIME_INCREMENT))
-   if [ $COMMAND_STATUS -gt 0 ] || [ ! -s "$wgettarget" ]
-    then
-     sleep $wait_time
-   fi
+reliablewgetanduntar() {
+  TIME_MAX=15
+  TIME_INCREMENT=5
+  wait_time=0
+  COMMAND_STATUS=0
+  until [ $wait_time -eq $TIME_MAX ] || [ -s "$wgettarget" ]; do
+    echo "try $wgetcommand + $tarcommand with timeincrement $wait_time"
+    wait_time=$(($wait_time + $TIME_INCREMENT))
+    $wgetcommand
+    COMMAND_STATUS=$?
+    if [ $COMMAND_STATUS -gt 0 ] || [ ! -s "$wgettarget" ]
+     then
+      sleep $wait_time
+    else
+      $tarcommand
+      COMMAND_STATUS=$?
+      if [ $COMMAND_STATUS -gt 0 ] || [ ! -s "$wgettarget" ]
+       then
+        sleep $wait_time
+      fi
+    fi
+    if [ $COMMAND_STATUS -eq 0 ]
+     then
+      break
+    fi
   done
  if [ $COMMAND_STATUS -ne 0 ]
    then
-     scriptstatus=1203
+     scriptstatus=1204
   fi
 }
 
@@ -86,17 +96,11 @@ log "END: apt-get update ran successfully"
 log "Unzip Hazelcast in var/lib dir..."
 wgettarget="hazelcast-$3.tar.gz"
 wgetcommand="wget --unlink -O $wgettarget http://download.hazelcast.com/download.jsp?version=hazelcast-$3&type=tar&p="
-reliablewget
+tarcommand="tar -xzf $wgettarget -C /var/lib/"
+reliablewgetanduntar
 if [ $scriptstatus -ne 0 ]
  then
-  log "wget failed after three attempts, exiting script"
-  exit $scriptstatus
-fi
-tar -xzf $wgettarget -C /var/lib/
-scriptstatus=$?
-if [ $scriptstatus -ne 0 ]
- then
-  log "Failed to run command tar -xzf hazelcast-$3.tar.gz -C /var/lib/"
+  log "wget and/or tar failed after three attempts, exiting script"
   exit $scriptstatus
 fi
 
